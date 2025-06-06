@@ -182,19 +182,20 @@
       }, speed);
     }
 
-    function checkForMilestone(value) {
-      const milestone = Math.floor(value / 1000) * 1000;
+function checkForMilestone(from, to) {
+  const fromMilestone = Math.floor(from / 1000);
+  const toMilestone = Math.floor(to / 1000);
 
-      if (
-        milestone > 0 &&
-        milestone !== lastCelebrated &&
-        !fanfareActive &&
-        value >= milestone
-      ) {
-        lastCelebrated = milestone;
-        triggerFanfare(milestone);
-      }
-    }
+  if (
+    toMilestone > fromMilestone &&
+    !fanfareActive
+  ) {
+    const milestoneValue = toMilestone * 1000;
+    lastCelebrated = milestoneValue;
+    triggerFanfare(milestoneValue);
+  }
+}
+
 
     function triggerFanfare(milestone) {
       fanfareActive = true;
