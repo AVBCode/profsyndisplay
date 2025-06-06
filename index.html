@@ -17,6 +17,7 @@
       height: 100vh;
       text-align: center;
       position: relative;
+      overflow: hidden;
     }
 
     .logo-bar {
@@ -48,6 +49,72 @@
       line-height: 1;
       white-space: nowrap;
     }
+
+    /* 🎉 Fanfare Styles */
+    #fanfare {
+      position: absolute;
+      top: 20%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      display: none;
+      z-index: 100;
+    }
+
+    .fanfare-text {
+      font-size: 2.5em;
+      color: gold;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px black;
+      margin-bottom: 0.5em;
+    }
+
+    .shout-text {
+      font-size: 3em;
+      color: #b362ff;
+      font-weight: bold;
+      text-shadow: 2px 2px 10px black;
+      animation: popIn 0.6s ease-out;
+      margin-bottom: 1em;
+    }
+
+    .rocket {
+      font-size: 3em;
+      position: absolute;
+      top: 100%;
+      opacity: 0;
+      animation: shoot 1s ease-out forwards;
+    }
+
+    .rocket-left {
+      left: 10%;
+      animation-delay: 0.2s;
+    }
+
+    .rocket-right {
+      right: 10%;
+      animation-delay: 0.2s;
+    }
+
+    @keyframes shoot {
+      0% { top: 100%; opacity: 0; }
+      50% { opacity: 1; }
+      100% { top: 20%; opacity: 0; }
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      60% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
   </style>
 </head>
 <body>
@@ -58,6 +125,14 @@
   <div class="title">Antal syn</div>
   <div id="number">Loading...</div>
 
+  <!-- 🎉 Fanfare Elements -->
+  <div id="fanfare">
+    <div class="fanfare-text">🎉 MILESTONE! 🎉</div>
+    <div class="shout-text">VI DE BEDSTE!</div>
+    <div class="rocket rocket-left">🚀</div>
+    <div class="rocket rocket-right">🚀</div>
+  </div>
+
   <script>
     const SHEET_ID = "1RKloafEUhUi2t4wPxMJxrLRcxuKFFdoAQz4MYFEqHo4";
     const API_KEY = "AIzaSyDzj_d65l8Ggunk5yE77V8msY9v_V_iEt0";
@@ -65,6 +140,8 @@
     const RANGE = "A1";
 
     let lastValue = null;
+    let lastCelebrated = null;
+    let fanfareActive = false;
 
     async function fetchNumber() {
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}&t=${Date.now()}`;
@@ -104,8 +181,38 @@
       const interval = setInterval(() => {
         current += step;
         element.innerText = current;
-        if (current === to) clearInterval(interval);
+        if (current === to) {
+          clearInterval(interval);
+          checkForMilestone(to);
+        }
       }, speed);
+    }
+
+    function checkForMilestone(value) {
+      const milestone = Math.floor(value / 1000) * 1000;
+
+      if (
+        milestone > 0 &&
+        milestone !== lastCelebrated &&
+        !fanfareActive &&
+        value >= milestone
+      ) {
+        lastCelebrated = milestone;
+        triggerFanfare(milestone);
+      }
+    }
+
+    function triggerFanfare(milestone) {
+      fanfareActive = true;
+
+      const fanfare = document.getElementById("fanfare");
+      fanfare.style.display = "block";
+      fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
+
+      setTimeout(() => {
+        fanfare.style.display = "none";
+        fanfareActive = false;
+      }, 60000); // 1 minute
     }
 
     fetchNumber();
