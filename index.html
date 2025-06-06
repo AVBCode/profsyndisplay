@@ -33,25 +33,32 @@
     const SHEET_ID = "1RKloafEUhUi2t4wPxMJxrLRcxuKFFdoAQz4MYFEqHo4";
     const API_KEY = "AIzaSyDzj_d65l8Ggunk5yE77V8msY9v_V_iEt0";
     const SHEET_NAME = "Sheet2";
-    const RANGE = `${SHEET_NAME}!A1`;
+    const RANGE = "A1";
 
     async function fetchNumber() {
       const timestamp = new Date().getTime(); // prevent caching
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}&t=${timestamp}`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}&t=${timestamp}`;
+      console.log("Fetching:", url);
 
       try {
         const response = await fetch(url);
         const data = await response.json();
-        const value = data.values?.[0]?.[0];
-        document.getElementById("number").innerText = value ?? "No value";
+        console.log("Response:", data);
+
+        const value = data?.values?.[0]?.[0];
+        if (value) {
+          document.getElementById("number").innerText = value;
+        } else {
+          document.getElementById("number").innerText = "No value in A1";
+        }
       } catch (err) {
-        document.getElementById("number").innerText = "Error loading number";
         console.error("Fetch error:", err);
+        document.getElementById("number").innerText = "Error fetching";
       }
     }
 
     fetchNumber();
-    setInterval(fetchNumber, 10000); // Refresh every 10 seconds
+    setInterval(fetchNumber, 10000); // refresh every 10 seconds
   </script>
 </body>
 </html>
