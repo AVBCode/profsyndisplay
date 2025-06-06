@@ -176,27 +176,25 @@
         current += step;
         element.innerText = current;
         if (current === to) {
-  clearInterval(interval);
-  checkForMilestone(from, to);
-}
-
+          clearInterval(interval);
+          checkForMilestone(from, to);
+        }
       }, speed);
     }
 
-function checkForMilestone(from, to) {
-  const fromMilestone = Math.floor(from / 1000);
-  const toMilestone = Math.floor(to / 1000);
+    function checkForMilestone(from, to) {
+      const fromMilestone = Math.floor(from / 1000);
+      const toMilestone = Math.floor(to / 1000);
 
-  if (
-    toMilestone > fromMilestone &&
-    !fanfareActive
-  ) {
-    const milestoneValue = toMilestone * 1000;
-    lastCelebrated = milestoneValue;
-    triggerFanfare(milestoneValue);
-  }
-}
-
+      if (
+        toMilestone > fromMilestone &&
+        !fanfareActive
+      ) {
+        const milestoneValue = toMilestone * 1000;
+        lastCelebrated = milestoneValue;
+        triggerFanfare(milestoneValue);
+      }
+    }
 
     function triggerFanfare(milestone) {
       fanfareActive = true;
