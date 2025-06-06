@@ -30,35 +30,60 @@
   <div id="number">Loading...</div>
 
   <script>
-    const SHEET_ID = "1RKloafEUhUi2t4wPxMJxrLRcxuKFFdoAQz4MYFEqHo4";
-    const API_KEY = "AIzaSyDzj_d65l8Ggunk5yE77V8msY9v_V_iEt0";
-    const SHEET_NAME = "Sheet2";
-    const RANGE = "A1";
+  const SHEET_ID = "1RKloafEUhUi2t4wPxMJxrLRcxuKFFdoAQz4MYFEqHo4";
+  const API_KEY = "AIzaSyDzj_d65l8Ggunk5yE77V8msY9v_V_iEt0";
+  const SHEET_NAME = "Sheet2";
+  const RANGE = "A1";
 
-    async function fetchNumber() {
-      const timestamp = new Date().getTime(); // prevent caching
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}&t=${timestamp}`;
-      console.log("Fetching:", url);
+  let lastValue = null;
 
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        console.log("Response:", data);
+  async function fetchNumber() {
+    const timestamp = new Date().getTime();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=${API_KEY}&t=${timestamp}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const newValue = parseInt(data?.values?.[0]?.[0], 10);
 
-        const value = data?.values?.[0]?.[0];
-        if (value) {
-          document.getElementById("number").innerText = value;
-        } else {
-          document.getElementById("number").innerText = "No value in A1";
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        document.getElementById("number").innerText = "Error fetching";
+      if (isNaN(newValue)) {
+        document.getElementById("number").innerText = "No valid number";
+        return;
       }
-    }
 
-    fetchNumber();
-    setInterval(fetchNumber, 10000); // refresh every 10 seconds
-  </script>
+      if (lastValue === null) {
+        document.getElementById("number").innerText = newValue;
+        lastValue = newValue;
+        return;
+      }
+
+      if (newValue !== lastValue) {
+        animateNumber(lastValue, newValue);
+        lastValue = newValue;
+      }
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+      document.getElementById("number").innerText = "Error fetching";
+    }
+  }
+
+  function animateNumber(from, to) {
+    const element = document.getElementById("number");
+    const step = from < to ? 1 : -1;
+    const speed = 30; // milliseconds between updates
+    let current = from;
+
+    const interval = setInterval(() => {
+      current += step;
+      element.innerText = current;
+      if (current === to) {
+        clearInterval(interval);
+      }
+    }, speed);
+  }
+
+  fetchNumber();
+  setInterval(fetchNumber, 10000); // every 10 seconds
+</script>
 </body>
 </html>
