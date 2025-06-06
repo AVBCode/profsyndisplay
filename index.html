@@ -176,9 +176,10 @@
         current += step;
         element.innerText = current;
         if (current === to) {
-          clearInterval(interval);
-          checkForMilestone(to);
-        }
+  clearInterval(interval);
+  checkForMilestone(from, to);
+}
+
       }, speed);
     }
 
