@@ -70,50 +70,44 @@
     }
 
     .shout-text {
-      font-size: 3em;
+      font-size: 12em;
       color: #b362ff;
       font-weight: bold;
       text-shadow: 2px 2px 10px black;
-      animation: popIn 0.6s ease-out;
+      animation: swirl 60s linear infinite;
       margin-bottom: 1em;
+      position: relative;
+      display: inline-block;
     }
 
     .rocket {
       font-size: 3em;
       position: absolute;
-      top: 100%;
-      opacity: 0;
-      animation: shoot 1s ease-out forwards;
+      animation: floatRocket 3s ease-in-out infinite;
     }
 
     .rocket-left {
       left: 10%;
-      animation-delay: 0.2s;
+      top: 90%;
     }
 
     .rocket-right {
       right: 10%;
-      animation-delay: 0.2s;
+      top: 90%;
     }
 
-    @keyframes shoot {
-      0% { top: 100%; opacity: 0; }
-      50% { opacity: 1; }
-      100% { top: 20%; opacity: 0; }
+    @keyframes floatRocket {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      50% { transform: translateY(-60vh) rotate(20deg); opacity: 1; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
     }
 
-    @keyframes popIn {
-      0% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      60% {
-        transform: scale(1.2);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1);
-      }
+    @keyframes swirl {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, -10px) rotate(5deg); }
+      50% { transform: translate(0, 10px) rotate(-5deg); }
+      75% { transform: translate(-20px, -10px) rotate(5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
     }
   </style>
 </head>
