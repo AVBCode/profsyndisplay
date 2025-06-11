@@ -128,10 +128,34 @@
   </div>
 
   <script>
-    const SHEET_ID = "1RKloafEUhUi2t4wPxMJxrLRcxuKFFdoAQz4MYFEqHo4";
-    const API_KEY = "AIzaSyDzj_d65l8Ggunk5yE77V8msY9v_V_iEt0";
-    const SHEET_NAME = "Sheet2";
-    const RANGE = "A1";
+async function fetchNumber() {
+  try {
+    const res = await fetch('/api/getNumber');
+    const data = await res.json();
+    const newValue = parseInt(data?.number, 10);
+
+    if (isNaN(newValue)) {
+      document.getElementById("number").innerText = "No valid number";
+      return;
+    }
+
+    if (lastValue === null) {
+      document.getElementById("number").innerText = newValue;
+      lastValue = newValue;
+      return;
+    }
+
+    if (newValue !== lastValue) {
+      animateNumber(lastValue, newValue);
+      lastValue = newValue;
+    }
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+    document.getElementById("number").innerText = "Error fetching";
+  }
+}
+
 
     let lastValue = null;
     let lastCelebrated = null;
