@@ -116,7 +116,7 @@
     <img src="logo.png" alt="prof.syn logo" class="logo" />
   </div>
 
-  <div class="title">Antal syns</div>
+  <div class="title">Antal syn</div>
   <div id="number">Loading...</div>
 
   <!-- 🎉 Fanfare Elements -->
@@ -127,84 +127,94 @@
     <div class="rocket rocket-right">🚀</div>
   </div>
 
-  <script>
-    let lastValue = null;
-    let lastCelebrated = null;
-    let fanfareActive = false;
+<script>
+  let lastValue = null;
+  let lastCelebrated = null;
+  let fanfareActive = false;
 
-    async function fetchNumber() {
-      try {
-        const res = await fetch('/api/getNumber');
-        const data = await res.json();
-        const newValue = parseInt(data?.number, 10);
+  async function fetchNumber(retries = 3, delay = 3000) {
+    try {
+      const res = await fetch('/api/getNumber');
+      const data = await res.json();
+      const newValue = parseInt(data?.number, 10);
 
-        if (isNaN(newValue)) {
-          document.getElementById("number").innerText = "No valid number";
-          return;
-        }
+      if (isNaN(newValue)) {
+        document.getElementById("number").innerText = "No valid number";
+        return;
+      }
 
-        if (lastValue === null) {
-          document.getElementById("number").innerText = newValue;
-          lastValue = newValue;
-          return;
-        }
+      if (lastValue === null) {
+        document.getElementById("number").innerText = newValue;
+        lastValue = newValue;
+        return;
+      }
 
-        if (newValue !== lastValue) {
-          animateNumber(lastValue, newValue);
-          lastValue = newValue;
-        }
+      if (newValue !== lastValue) {
+        animateNumber(lastValue, newValue);
+        lastValue = newValue;
+      }
 
-      } catch (error) {
-        console.error("Fetch error:", error);
-        document.getElementById("number").innerText = "Error fetching";
+    } catch (error) {
+      console.error("Fetch error:", error);
+      document.getElementById("number").innerText = "Error fetching";
+
+      if (retries > 0) {
+        setTimeout(() => fetchNumber(retries - 1, delay), delay);
       }
     }
+  }
 
-    function animateNumber(from, to) {
-      const element = document.getElementById("number");
-      const step = from < to ? 1 : -1;
-      const speed = 200;
-      let current = from;
+  function animateNumber(from, to) {
+    const element = document.getElementById("number");
+    const step = from < to ? 1 : -1;
+    const speed = 200;
+    let current = from;
 
-      const interval = setInterval(() => {
-        current += step;
-        element.innerText = current;
-        if (current === to) {
-          clearInterval(interval);
-          checkForMilestone(from, to);
-        }
-      }, speed);
-    }
-
-    function checkForMilestone(from, to) {
-      const fromMilestone = Math.floor(from / 1000);
-      const toMilestone = Math.floor(to / 1000);
-
-      if (
-        toMilestone > fromMilestone &&
-        !fanfareActive
-      ) {
-        const milestoneValue = toMilestone * 1000;
-        lastCelebrated = milestoneValue;
-        triggerFanfare(milestoneValue);
+    const interval = setInterval(() => {
+      current += step;
+      element.innerText = current;
+      if (current === to) {
+        clearInterval(interval);
+        checkForMilestone(from, to);
       }
+    }, speed);
+  }
+
+  function checkForMilestone(from, to) {
+    const fromMilestone = Math.floor(from / 1000);
+    const toMilestone = Math.floor(to / 1000);
+
+    if (toMilestone > fromMilestone && !fanfareActive) {
+      const milestoneValue = toMilestone * 1000;
+      lastCelebrated = milestoneValue;
+      triggerFanfare(milestoneValue);
     }
+  }
 
-    function triggerFanfare(milestone) {
-      fanfareActive = true;
+  function triggerFanfare(milestone) {
+    fanfareActive = true;
 
-      const fanfare = document.getElementById("fanfare");
-      fanfare.style.display = "block";
-      fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
+    const fanfare = document.getElementById("fanfare");
+    fanfare.style.display = "block";
+    fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
 
-      setTimeout(() => {
-        fanfare.style.display = "none";
-        fanfareActive = false;
-      }, 60000); // 1 minute
+    setTimeout(() => {
+      fanfare.style.display = "none";
+      fanfareActive = false;
+    }, 60000); // 1 minute
+  }
+
+  // Initial fetch + interval loop
+  fetchNumber();
+  setInterval(fetchNumber, 10000);
+
+  // ✅ Add re-fetch on wake/visibility change
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      fetchNumber();
     }
+  });
+</script>
 
-    fetchNumber();
-    setInterval(fetchNumber, 10000);
-  </script>
 </body>
 </html>
