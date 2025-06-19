@@ -132,34 +132,38 @@
   let lastCelebrated = null;
   let fanfareActive = false;
 
-  async function fetchNumber(retries = 3, delay = 3000) {
-    try {
-      const res = await fetch('/api/getNumber');
-      const data = await res.json();
-      const newValue = parseInt(data?.number, 10);
+  async function fetchNumberWithRetries(maxRetries = 3, delay = 2000) {
+    let attempt = 0;
 
-      if (isNaN(newValue)) {
-        document.getElementById("number").innerText = "No valid number";
-        return;
-      }
+    while (attempt < maxRetries) {
+      try {
+        const res = await fetch(`/api/getNumber?_=${Date.now()}`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
 
-      if (lastValue === null) {
-        document.getElementById("number").innerText = newValue;
-        lastValue = newValue;
-        return;
-      }
+        const data = await res.json();
+        const newValue = parseInt(data?.number, 10);
 
-      if (newValue !== lastValue) {
-        animateNumber(lastValue, newValue);
-        lastValue = newValue;
-      }
+        if (isNaN(newValue)) throw new Error("Invalid number");
 
-    } catch (error) {
-      console.error("Fetch error:", error);
-      document.getElementById("number").innerText = "Error fetching";
+        if (lastValue === null) {
+          document.getElementById("number").innerText = newValue;
+          lastValue = newValue;
+          return;
+        }
 
-      if (retries > 0) {
-        setTimeout(() => fetchNumber(retries - 1, delay), delay);
+        if (newValue !== lastValue) {
+          animateNumber(lastValue, newValue);
+          lastValue = newValue;
+        }
+
+        return; // success
+      } catch {
+        attempt++;
+        if (attempt >= maxRetries) {
+          document.getElementById("number").innerText = "Error fetching";
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
@@ -205,13 +209,13 @@
   }
 
   // Initial fetch + interval loop
-  fetchNumber();
-  setInterval(fetchNumber, 10000);
+  fetchNumberWithRetries();
+  setInterval(fetchNumberWithRetries, 10000);
 
-  // ✅ Add re-fetch on wake/visibility change
+  // Re-fetch on tab visibility change
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      fetchNumber();
+      fetchNumberWithRetries();
     }
   });
 </script>
