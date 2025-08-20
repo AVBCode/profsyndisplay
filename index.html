@@ -109,41 +109,6 @@
       75% { transform: translate(-20px, -10px) rotate(5deg); }
       100% { transform: translate(0, 0) rotate(0deg); }
     }
-
-    /* 🔥 Extra fanfare for 10,000 */
-    #extraFanfare {
-      display: none;
-      position: absolute;
-      inset: 0;
-      z-index: 150;
-      pointer-events: none;
-    }
-
-    #extraFanfare .rocket {
-      font-size: 3.5em;
-    }
-
-    .glitter {
-      position: absolute;
-      top: 25%;
-      width: 100%;
-      text-align: center;
-      font-size: 3em;
-      animation: glitterPulse 1.5s infinite alternate;
-    }
-
-    .corner-note {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    @keyframes glitterPulse {
-      from { opacity: 0.5; transform: scale(1); }
-      to   { opacity: 1; transform: scale(1.2); }
-    }
   </style>
 </head>
 <body>
@@ -154,27 +119,12 @@
   <div class="title">Antal syn</div>
   <div id="number">Loading...</div>
 
-  <!-- 🎉 Normal Fanfare Elements -->
+  <!-- 🎉 Fanfare Elements -->
   <div id="fanfare">
     <div class="fanfare-text">🎉 MILESTONE! 🎉</div>
     <div class="shout-text">VI DE BEDSTE!</div>
     <div class="rocket rocket-left">🚀</div>
     <div class="rocket rocket-right">🚀</div>
-  </div>
-
-  <!-- 🚀✨ Extra Fanfare for 10,000 -->
-  <div id="extraFanfare">
-    <!-- More rockets -->
-    <div class="rocket rocket-left" style="left:20%;">🚀</div>
-    <div class="rocket rocket-right" style="right:20%;">🚀</div>
-    <div class="rocket rocket-left" style="left:30%;">🚀</div>
-    <div class="rocket rocket-right" style="right:30%;">🚀</div>
-
-    <!-- Glitter -->
-    <div class="glitter">✨✨✨</div>
-
-    <!-- Corner note -->
-    <div class="corner-note">Albert er en stjerne ⭐</div>
   </div>
 
 <script>
@@ -184,6 +134,7 @@
 
   async function fetchNumberWithRetries(maxRetries = 3, delay = 2000) {
     let attempt = 0;
+
     while (attempt < maxRetries) {
       try {
         const res = await fetch(`/api/getNumber?_=${Date.now()}`);
@@ -204,7 +155,8 @@
           animateNumber(lastValue, newValue);
           lastValue = newValue;
         }
-        return;
+
+        return; // success
       } catch {
         attempt++;
         if (attempt >= maxRetries) {
@@ -247,20 +199,11 @@
     fanfareActive = true;
 
     const fanfare = document.getElementById("fanfare");
-    const extra = document.getElementById("extraFanfare");
-
     fanfare.style.display = "block";
-    fanfare.querySelector(".fanfare-text").innerText =
-      `🎉 ${milestone} MILESTONE! 🎉`;
-
-    // Extra effects only for 10,000
-    if (milestone === 10000) {
-      extra.style.display = "block";
-    }
+    fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
 
     setTimeout(() => {
       fanfare.style.display = "none";
-      extra.style.display = "none";
       fanfareActive = false;
     }, 60000); // 1 minute
   }
@@ -269,11 +212,13 @@
   fetchNumberWithRetries();
   setInterval(fetchNumberWithRetries, 10000);
 
+  // Re-fetch on tab visibility change
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       fetchNumberWithRetries();
     }
   });
 </script>
+
 </body>
 </html>
