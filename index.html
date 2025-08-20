@@ -109,6 +109,38 @@
       75% { transform: translate(-20px, -10px) rotate(5deg); }
       100% { transform: translate(0, 0) rotate(0deg); }
     }
+
+    /* NEW: Extra fanfare for 10,000 */
+    #megaFanfare {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 200;
+      background: rgba(0,0,0,0.85);
+      text-align: center;
+    }
+    #megaFanfare .mega-title {
+      font-size: 6em;
+      font-weight: 900;
+      color: gold;
+      text-shadow: 0 0 20px black;
+    }
+    #megaFanfare .mega-sub {
+      font-size: 2em;
+      margin-top: 0.5em;
+    }
+
+    /* NEW: corner note */
+    .corner-note {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -127,6 +159,15 @@
     <div class="rocket rocket-right">🚀</div>
   </div>
 
+  <!-- NEW: Extra fanfare for 10,000 -->
+  <div id="megaFanfare">
+    <div class="mega-title">🎊 10,000! 🎊</div>
+    <div class="mega-sub">VI ER DE BEDSTE!</div>
+  </div>
+
+  <!-- NEW: corner note -->
+  <div class="corner-note">Albert er en stjerne ⭐</div>
+
 <script>
   let lastValue = null;
   let lastCelebrated = null;
@@ -134,15 +175,12 @@
 
   async function fetchNumberWithRetries(maxRetries = 3, delay = 2000) {
     let attempt = 0;
-
     while (attempt < maxRetries) {
       try {
         const res = await fetch(`/api/getNumber?_=${Date.now()}`);
         if (!res.ok) throw new Error(`Status ${res.status}`);
-
         const data = await res.json();
         const newValue = parseInt(data?.number, 10);
-
         if (isNaN(newValue)) throw new Error("Invalid number");
 
         if (lastValue === null) {
@@ -155,8 +193,7 @@
           animateNumber(lastValue, newValue);
           lastValue = newValue;
         }
-
-        return; // success
+        return;
       } catch {
         attempt++;
         if (attempt >= maxRetries) {
@@ -191,34 +228,47 @@
     if (toMilestone > fromMilestone && !fanfareActive) {
       const milestoneValue = toMilestone * 1000;
       lastCelebrated = milestoneValue;
-      triggerFanfare(milestoneValue);
+
+      if (milestoneValue === 10000) {
+        triggerMegaFanfare();
+      } else {
+        triggerFanfare(milestoneValue);
+      }
     }
   }
 
   function triggerFanfare(milestone) {
     fanfareActive = true;
-
     const fanfare = document.getElementById("fanfare");
     fanfare.style.display = "block";
-    fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
-
+    fanfare.querySelector(".fanfare-text").innerText =
+      `🎉 ${milestone} MILESTONE! 🎉`;
     setTimeout(() => {
       fanfare.style.display = "none";
       fanfareActive = false;
-    }, 60000); // 1 minute
+    }, 60000);
+  }
+
+  // NEW: Mega fanfare trigger
+  function triggerMegaFanfare() {
+    fanfareActive = true;
+    const overlay = document.getElementById("megaFanfare");
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      overlay.style.display = "none";
+      fanfareActive = false;
+    }, 10000); // show for 10s
   }
 
   // Initial fetch + interval loop
   fetchNumberWithRetries();
   setInterval(fetchNumberWithRetries, 10000);
 
-  // Re-fetch on tab visibility change
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       fetchNumberWithRetries();
     }
   });
 </script>
-
 </body>
 </html>
