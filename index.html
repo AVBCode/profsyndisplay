@@ -110,36 +110,39 @@
       100% { transform: translate(0, 0) rotate(0deg); }
     }
 
-    /* NEW: Extra fanfare for 10,000 */
-    #megaFanfare {
+    /* 🔥 Extra fanfare for 10,000 */
+    #extraFanfare {
+      display: none;
       position: absolute;
       inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 200;
-      background: rgba(0,0,0,0.85);
-      text-align: center;
-    }
-    #megaFanfare .mega-title {
-      font-size: 6em;
-      font-weight: 900;
-      color: gold;
-      text-shadow: 0 0 20px black;
-    }
-    #megaFanfare .mega-sub {
-      font-size: 2em;
-      margin-top: 0.5em;
+      z-index: 150;
+      pointer-events: none;
     }
 
-    /* NEW: corner note */
+    #extraFanfare .rocket {
+      font-size: 3.5em;
+    }
+
+    .glitter {
+      position: absolute;
+      top: 25%;
+      width: 100%;
+      text-align: center;
+      font-size: 3em;
+      animation: glitterPulse 1.5s infinite alternate;
+    }
+
     .corner-note {
-      position: fixed;
+      position: absolute;
       right: 10px;
       bottom: 10px;
       font-size: 14px;
-      opacity: 0.8;
+      opacity: 0.85;
+    }
+
+    @keyframes glitterPulse {
+      from { opacity: 0.5; transform: scale(1); }
+      to   { opacity: 1; transform: scale(1.2); }
     }
   </style>
 </head>
@@ -151,7 +154,7 @@
   <div class="title">Antal syn</div>
   <div id="number">Loading...</div>
 
-  <!-- 🎉 Fanfare Elements -->
+  <!-- 🎉 Normal Fanfare Elements -->
   <div id="fanfare">
     <div class="fanfare-text">🎉 MILESTONE! 🎉</div>
     <div class="shout-text">VI DE BEDSTE!</div>
@@ -159,14 +162,20 @@
     <div class="rocket rocket-right">🚀</div>
   </div>
 
-  <!-- NEW: Extra fanfare for 10,000 -->
-  <div id="megaFanfare">
-    <div class="mega-title">🎊 10,000! 🎊</div>
-    <div class="mega-sub">VI ER DE BEDSTE!</div>
-  </div>
+  <!-- 🚀✨ Extra Fanfare for 10,000 -->
+  <div id="extraFanfare">
+    <!-- More rockets -->
+    <div class="rocket rocket-left" style="left:20%;">🚀</div>
+    <div class="rocket rocket-right" style="right:20%;">🚀</div>
+    <div class="rocket rocket-left" style="left:30%;">🚀</div>
+    <div class="rocket rocket-right" style="right:30%;">🚀</div>
 
-  <!-- NEW: corner note -->
-  <div class="corner-note">Albert er en stjerne ⭐</div>
+    <!-- Glitter -->
+    <div class="glitter">✨✨✨</div>
+
+    <!-- Corner note -->
+    <div class="corner-note">Albert er en stjerne ⭐</div>
+  </div>
 
 <script>
   let lastValue = null;
@@ -179,8 +188,10 @@
       try {
         const res = await fetch(`/api/getNumber?_=${Date.now()}`);
         if (!res.ok) throw new Error(`Status ${res.status}`);
+
         const data = await res.json();
         const newValue = parseInt(data?.number, 10);
+
         if (isNaN(newValue)) throw new Error("Invalid number");
 
         if (lastValue === null) {
@@ -228,36 +239,30 @@
     if (toMilestone > fromMilestone && !fanfareActive) {
       const milestoneValue = toMilestone * 1000;
       lastCelebrated = milestoneValue;
-
-      if (milestoneValue === 10000) {
-        triggerMegaFanfare();
-      } else {
-        triggerFanfare(milestoneValue);
-      }
+      triggerFanfare(milestoneValue);
     }
   }
 
   function triggerFanfare(milestone) {
     fanfareActive = true;
+
     const fanfare = document.getElementById("fanfare");
+    const extra = document.getElementById("extraFanfare");
+
     fanfare.style.display = "block";
     fanfare.querySelector(".fanfare-text").innerText =
       `🎉 ${milestone} MILESTONE! 🎉`;
+
+    // Extra effects only for 10,000
+    if (milestone === 10000) {
+      extra.style.display = "block";
+    }
+
     setTimeout(() => {
       fanfare.style.display = "none";
+      extra.style.display = "none";
       fanfareActive = false;
-    }, 60000);
-  }
-
-  // NEW: Mega fanfare trigger
-  function triggerMegaFanfare() {
-    fanfareActive = true;
-    const overlay = document.getElementById("megaFanfare");
-    overlay.style.display = "flex";
-    setTimeout(() => {
-      overlay.style.display = "none";
-      fanfareActive = false;
-    }, 10000); // show for 10s
+    }, 60000); // 1 minute
   }
 
   // Initial fetch + interval loop
