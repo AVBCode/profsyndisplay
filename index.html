@@ -109,6 +109,114 @@
       75% { transform: translate(-20px, -10px) rotate(5deg); }
       100% { transform: translate(0, 0) rotate(0deg); }
     }
+
+    /* ===== Mega Fanfare Overlay (10k only) ===== */
+    #megaFanfare {
+      position: fixed;
+      inset: 0;
+      display: none;              /* hidden by default */
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+      backdrop-filter: blur(2px);
+    }
+    #megaFanfare.show { display: flex; }
+
+    .mega-content {
+      text-align: center;
+      pointer-events: none;
+      animation: pop-in 600ms ease-out forwards;
+      transform: scale(0.95);
+      opacity: 0;
+    }
+
+    .mega-title {
+      font-size: clamp(3rem, 10vw, 10rem);
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #ffd700, #ff69b4, #7df9ff, #adff2f, #ffd700);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 18px rgba(0,0,0,0.6);
+      animation: hue-shift 6s linear infinite;
+    }
+
+    .mega-sub {
+      margin-top: 0.3em;
+      font-size: clamp(1.5rem, 5vw, 4rem);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.8);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .mega-note {
+      margin-top: 0.8em;
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      opacity: 0.85;
+    }
+
+    /* Confetti (behind fireworks) */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -2; /* behind fireworks canvas */
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 16px;
+      background: white;
+      opacity: 0.95;
+      transform: translate3d(0, -100%, 0) rotate(0deg);
+      animation: confetti-fall linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      0%   { transform: translate3d(var(--x), -10%, 0) rotate(0deg); opacity: 1; }
+      100% { transform: translate3d(calc(var(--x) + var(--drift)), 110%, 0) rotate(var(--rot)); opacity: 1; }
+    }
+
+    @keyframes hue-shift {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    @keyframes pop-in {
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+
+    /* Fireworks canvas sits behind the text but above confetti */
+    #fireworksCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;          /* above confetti (-2), below text */
+      pointer-events: none;
+    }
+
+    /* tiny corner note */
+    .corner-note {
+      position: fixed;
+      right: 14px;
+      bottom: 10px;
+      font-size: 12px;
+      opacity: 0.75;
+      letter-spacing: 0.2px;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -125,6 +233,18 @@
     <div class="shout-text">VI DE BEDSTE!</div>
     <div class="rocket rocket-left">🚀</div>
     <div class="rocket rocket-right">🚀</div>
+  </div>
+
+  <!-- 🎊 Mega Fanfare (10,000 only) -->
+  <div id="megaFanfare" aria-hidden="true">
+    <div class="mega-content">
+      <div class="mega-title">🎊 10,000! 🎊</div>
+      <div class="mega-sub">VI ER DE BEDSTE!</div>
+      <div class="mega-note">Tak for at hjælpe os nå denne milepæl ❤️</div>
+    </div>
+    <div class="confetti-container" id="confetti"></div>
+    <canvas id="fireworksCanvas" aria-hidden="true"></canvas>
+    <div class="corner-note" aria-hidden="true">Albert er en stjerne ⭐</div>
   </div>
 
 <script>
@@ -146,7 +266,7 @@
         if (isNaN(newValue)) throw new Error("Invalid number");
 
         if (lastValue === null) {
-          document.getElementById("number").innerText = newValue;
+          document.getElementById("number").innerText = newValue.toLocaleString();
           lastValue = newValue;
           return;
         }
@@ -176,7 +296,7 @@
 
     const interval = setInterval(() => {
       current += step;
-      element.innerText = current;
+      element.innerText = current.toLocaleString();
       if (current === to) {
         clearInterval(interval);
         checkForMilestone(from, to);
@@ -186,12 +306,22 @@
 
   function checkForMilestone(from, to) {
     const fromMilestone = Math.floor(from / 1000);
-    const toMilestone = Math.floor(to / 1000);
+    const toMilestone   = Math.floor(to / 1000);
 
-    if (toMilestone > fromMilestone && !fanfareActive) {
+    if (toMilestone > fromMilestone) {
       const milestoneValue = toMilestone * 1000;
+
+      // Prevent repeating the same celebration
+      if (lastCelebrated === milestoneValue) return;
       lastCelebrated = milestoneValue;
-      triggerFanfare(milestoneValue);
+
+      if (!fanfareActive) {
+        if (milestoneValue === 10000) {
+          triggerMegaFanfare(milestoneValue);
+        } else {
+          triggerFanfare(milestoneValue);
+        }
+      }
     }
   }
 
@@ -200,12 +330,198 @@
 
     const fanfare = document.getElementById("fanfare");
     fanfare.style.display = "block";
-    fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone} MILESTONE! 🎉`;
+    fanfare.querySelector(".fanfare-text").innerText = `🎉 ${milestone.toLocaleString()} MILESTONE! 🎉`;
 
     setTimeout(() => {
       fanfare.style.display = "none";
       fanfareActive = false;
     }, 60000); // 1 minute
+  }
+
+  // ===== FIREWORKS ENGINE =====
+  function createFireworks(canvas) {
+    const ctx = canvas.getContext('2d');
+    let width = 0, height = 0;
+    let rafId = null;
+    let particles = [];
+    let running = false;
+
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    function resize() {
+      // Use viewport size so it works even if overlay is hidden at init
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * DPR);
+      canvas.height = Math.floor(height * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+
+    function addBurst(x, y, options = {}) {
+      const count = options.count || 80;
+      const speedMin = options.speedMin || 2.2;
+      const speedMax = options.speedMax || 5.0;
+      const hueBase = options.hueBase || Math.random() * 360;
+
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + rand(-0.05, 0.05);
+        const speed = rand(speedMin, speedMax);
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+
+        particles.push({
+          x, y, vx, vy,
+          life: rand(700, 1400),              // ms
+          age: 0,
+          size: rand(1.2, 2.2),
+          color: `hsl(${hueBase + rand(-30, 30)}, 100%, ${rand(55, 70)}%)`,
+          gravity: 0.045,
+          drag: 0.996,
+          glow: rand(6, 14)
+        });
+      }
+    }
+
+    function tick(dt) {
+      // fade the canvas slightly for trails
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'lighter';
+
+      const alive = [];
+      for (const p of particles) {
+        p.age += dt;
+        if (p.age >= p.life) continue;
+
+        // physics
+        p.vx *= p.drag;
+        p.vy = p.vy * p.drag + p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // draw
+        ctx.beginPath();
+        ctx.shadowBlur = p.glow;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        alive.push(p);
+      }
+      particles = alive;
+    }
+
+    let lastT = performance.now();
+    function loop(t) {
+      const dt = Math.min(50, t - lastT);
+      lastT = t;
+      tick(dt);
+      if (running) rafId = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (running) return;
+      running = true;
+      lastT = performance.now();
+      rafId = requestAnimationFrame(loop);
+    }
+    function stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      particles = [];
+      // clear residual trails
+      ctx.clearRect(0, 0, width, height);
+    }
+
+    // public API
+    return {
+      start, stop, addBurst,
+      burstShowcase(durationMs = 5000) {
+        const launch = () => {
+          const cx = Math.random() * (width * 0.6) + width * 0.2;
+          const cy = Math.random() * (height * 0.3) + height * 0.25;
+          addBurst(cx, cy, {
+            count: Math.floor(Math.random() * 40) + 80,
+            speedMin: 2.2,
+            speedMax: 5.2,
+            hueBase: Math.random() * 360
+          });
+        };
+        // initial salvo
+        for (let i = 0; i < 3; i++) launch();
+        // timed bursts
+        const interval = setInterval(launch, 600);
+        setTimeout(() => clearInterval(interval), durationMs);
+      }
+    };
+  }
+
+  // ===== Mega Fanfare trigger (10k) =====
+  let _fwInstance = null;
+
+  function triggerMegaFanfare(milestone) {
+    fanfareActive = true;
+
+    const overlay = document.getElementById("megaFanfare");
+    const confettiRoot = document.getElementById("confetti");
+    const canvas = document.getElementById("fireworksCanvas");
+
+    // Update big title
+    overlay.querySelector(".mega-title").textContent = `🎊 ${milestone.toLocaleString()}! 🎊`;
+
+    // Build confetti
+    confettiRoot.innerHTML = "";
+    const PIECES = 180;
+    const durationMin = 4000;
+    const durationMax = 9000;
+    const driftRange  = 200;
+
+    for (let i = 0; i < PIECES; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti";
+
+      const xStart = Math.floor(Math.random() * 100);
+      const drift = (Math.random() * driftRange * 2 - driftRange) + "px";
+      const rot = (Math.random() * 1440 - 720) + "deg";
+      const dur = Math.floor(Math.random() * (durationMax - durationMin) + durationMin);
+
+      piece.style.background = [
+        "#ffd700", "#ff69b4", "#7df9ff", "#adff2f", "#b362ff", "#ffa500", "#00e676"
+      ][Math.floor(Math.random() * 7)];
+
+      piece.style.left = xStart + "vw";
+      piece.style.setProperty("--x", "0px");
+      piece.style.setProperty("--drift", drift);
+      piece.style.setProperty("--rot", rot);
+      piece.style.animationDuration = dur + "ms";
+      piece.style.animationDelay = Math.floor(Math.random() * 800) + "ms";
+
+      confettiRoot.appendChild(piece);
+    }
+
+    // Fireworks init & show
+    if (!_fwInstance) _fwInstance = createFireworks(canvas);
+    overlay.classList.add("show");
+    _fwInstance.start();
+    _fwInstance.burstShowcase(8000); // bursts for ~8s
+
+    // Auto-hide & cleanup
+    const SHOW_MS = 15000; // 15s overlay
+    const CLEANUP_MS = SHOW_MS + 100; // slight buffer
+    setTimeout(() => {
+      overlay.classList.remove("show");
+    }, SHOW_MS);
+
+    setTimeout(() => {
+      confettiRoot.innerHTML = "";
+      _fwInstance.stop();
+      fanfareActive = false;
+    }, CLEANUP_MS);
   }
 
   // Initial fetch + interval loop
